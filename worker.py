@@ -1,46 +1,45 @@
-  
+from collections import deque
+from datetime import datetime
+import queue
+
 def worker_start(log_queue, manager_dict):
-    
     while True:
         try:
             element = log_queue.get(block = True, timeout = 1)
             
             if element is None:
                 break
+
+            # {
+            #     "timestamp": "2026-02-26T16:22:51.482Z",
+            #     "level": "ERROR",
+            #     "service": "payment-gateway",
+            #     "event": "timeout_detected",
+            #     "duration_ms": 502,
+            #     "on_call_engineer": "jdoe"
+            # }
             
-            # {"level": "WARN", "msg": "Auth failure: invalid credentials for 'admin'", "time": "14:00:01:56", "user": "admin", "ip": "192.168.5.12"}
-            # {"level": "WARN", "msg": "Auth failure: account locked for 'root'", "time": "14:00:02:42", "user": "root", "ip": "104.28.1.5"}
-            # {"level": "ERROR", "msg": "Connection error: peer reset connection during handshake", "time": "14:00:03:71", "user": "unknown", "ip": "192.168.5.12"}
-            # {"level": "WARN", "msg": "Auth failure: invalid credentials for 'admin'", "time": "14:00:04:33", "user": "admin", "ip": "192.168.5.12"}
-            lvl, msg, time = element.get("level", ""), element.get("msg", ""), element.get("time", "")
+            lvl = element.get("level", "")
+            msg = element.get("event", "")
+            time = element.get("timestamp", "")
+
+            title = lvl + msg
+            curTime = datetime.fromisoformat(time.replace('Z', '+00:00'))
+
+            tmp_deque = deque(manager_dict.get(title, []))
+
+            while tmp_deque:
+                diff = curTime - tmp_deque[0]
+
+                if diff.total_seconds() > 100.0:
+                    tmp_deque.popleft()
             
-            name = lvl + msg[:10]
-            
-            if name not in manager_dict:
-                manager_dict[name] = SortedList()
-                
-            digits = time.split(":")
-            
-            for i in range(len(digits)):
-                digits[i] = str(40 + int(digits[i]))
-                
-            digits = int("".join(digits))
-            removals = []
-            
-            for t in manager_dict[name]:
-                if (digits + (HR_PADDING if str(t[:2]) > time[:2] else 0)) - (t + (PADDING if str(t[:2]) != time[:2] else 0)) < 100:
-                    break
-                else:
-                    removals.append(t)
-            
-            for r in removals:
-                manager_dict[name].remove(r)
-            
-            manager_dict[name].add(digits)
-            
-            
+            tmp_deque.append(curTime)
+
+            # serialization safety.
+            manager_dict[title] = list(tmp_deque)
+
         except queue.Empty:
-            # No data in the last second? Just loop back and try again.
             continue
         except Exception as e:
             print(f"Worker encountered an error: {e}")
