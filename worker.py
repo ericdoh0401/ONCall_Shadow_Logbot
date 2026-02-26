@@ -9,15 +9,6 @@ def worker_start(log_queue, manager_dict):
             
             if element is None:
                 break
-
-            # {
-            #     "timestamp": "2026-02-26T16:22:51.482Z",
-            #     "level": "ERROR",
-            #     "service": "payment-gateway",
-            #     "event": "timeout_detected",
-            #     "duration_ms": 502,
-            #     "on_call_engineer": "jdoe"
-            # }
             
             lvl = element.get("level", "")
             msg = element.get("event", "")
