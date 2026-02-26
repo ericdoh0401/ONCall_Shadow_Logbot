@@ -64,7 +64,7 @@ def solve(n):
             f.write(f"[{date}] {level.ljust(8)} {service.ljust(18)}{tid_str} {message}\n")
 
             if state_idx == 2 and random.random() < 0.3:
-                f.write(f"    at com.app.{service}.Core.execute(SourceFile.java:{random.randint(10, 500)})\n")
+                f.write(f"    at com.app.{service}.Core.execute(SourceFile.python:{random.randint(10, 500)})\n")
 
             time.sleep(random.uniform(0.0001, 0.005))
 
