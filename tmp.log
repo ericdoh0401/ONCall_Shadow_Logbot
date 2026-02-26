@@ -1,4 +1,0 @@
-[2026-02-26 18:21:16.879178] DEBUG frontend-gateway Health check heartbeat sent
-[2026-02-26 18:21:16.880609] CRITICAL inventory-db Primary data center region (us-east-1) unreachable
-[2026-02-26 18:21:16.880851] INFO payment-processor User session initialized
-[2026-02-26 18:21:16.881251] TRACE payment-processor Raw packet payload: 48 65 6c 6c 6f 20 57 6f 72 6c 64

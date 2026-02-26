@@ -1,95 +1,73 @@
-# [2026-02-26 17:55:01.234] INFO  [auth-service] User login successful
-# [2026-02-26 17:56:12.887] WARN  [inventory-manager] Low stock threshold reached for SKU-505
-# [2026-02-26 17:57:45.001] ERROR [payment-gateway] Credit card processing failed
-# [2026-02-26 17:58:20.552] DEBUG [email-worker] SMTP handshake completed
-# [2026-02-26 18:00:05.110] FATAL [database-proxy] Connection pool exhausted
-
-# timestamp, level, service name, message
-
 import datetime
 import random
 import time
+import numpy as np
+import uuid
 
-# Expanded Levels (Adding standard trace levels)
+# Configuration remains similar but organized for logic mapping
 LVLS = ["TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL", "CRITICAL"]
+SRVS = ["auth-api", "payment-processor", "inventory-db", "order-worker", "frontend-gateway"]
 
-# Service Names (Common microservice architecture components)
-SRVS = [
-    "auth-api",          # Identity & Permissions
-    "payment-processor", # Stripe/Bank integrations
-    "inventory-db",      # Database layer
-    "order-worker",      # Background task processor
-    "frontend-gateway",  # Nginx/Load Balancer
-    "email-notifier",    # Notification service
-    "search-engine",     # Elasticsearch/Indexing
-    "shipping-api"       # Third-party logistics tracking
-]
-
-# Messages (Categorized by severity for logic mapping)
-MSGS = {
-    "TRACE": ["Variable 'retry_count' incremented to 3",
-        "Entering function: validate_checksum_v2()",
-        "Memory address pointer set to 0x7ffee392",
-        "Raw packet payload: 48 65 6c 6c 6f 20 57 6f 72 6c 64",
-        "Iterating sequence: item 402 of 1000",
-        "Hook registered: post_process_data"
-    ],
-    
-    "INFO": ["User session initialized",
-    "Cache hit for key: user_profile",
-    "Health check heartbeat sent",
-    "Outbound request to provider successful"],
-
-    "DEBUG": ["User session initialized",
-    "Cache hit for key: user_profile",
-    "Health check heartbeat sent",
-    "Outbound request to provider successful"],
-
-    "WARN": ["API rate limit approaching (85%)",
-    "Slow query detected: execution > 500ms",
-    "Deprecated API version used by client",
-    "Memory usage exceeding threshold (90%)"],
-
-    "ERROR": ["Failed to validate JWT signature",
-    "Connection reset by peer (upstream)",
-    "Database migration failed: lock timeout",
-    "Disk space critical: 0 bytes remaining",
-    "Dependency 'payment-provider' is unreachable",
-    "Illegal state exception: unexpected null value"],
-
-    "FATAL": ["Failed to validate JWT signature",
-    "Connection reset by peer (upstream)",
-    "Database migration failed: lock timeout",
-    "Disk space critical: 0 bytes remaining",
-    "Dependency 'payment-provider' is unreachable",
-    "Illegal state exception: unexpected null value"],
-
-    "CRITICAL": ["Kernel panic: Unable to mount root filesystem",
-        "Primary data center region (us-east-1) unreachable",
-        "Global emergency shutdown initiated by watchdog",
-        "Data integrity check failed: possible storage corruption",
-        "Hardware failure: Disk array /dev/md0 degraded",
-        "Total resource exhaustion: system unable to fork new processes"
-    ]
+# Grouping messages by state for the Markov Chain
+STATE_MSGS = {
+    0: { # HEALTHY STATE (Mostly INFO/DEBUG)
+        "levels": [0, 1, 2],
+        "msgs": ["User session initialized", "Cache hit for key: user_profile", "Health check heartbeat sent"]
+    },
+    1: { # DEGRADED STATE (Mostly WARN)
+        "levels": [3],
+        "msgs": ["API rate limit approaching (85%)", "Slow query detected: execution > 500ms", "Retrying connection to upstream"]
+    },
+    2: { # FAILURE STATE (ERROR/FATAL/CRITICAL)
+        "levels": [4, 5, 6],
+        "msgs": ["Database migration failed: lock timeout", "Primary data center unreachable", "Connection pool exhausted"]
+    }
 }
 
 def solve(n):
-    with open("tmp.log", 'w') as f:
+    # prevState: [Healthy, Degraded, Failure]
+    state_vector = np.array([1, 0, 0])
+    transition = np.array([
+        [0.9, 0.07, 0.03], # Healthy: usually stays healthy
+        [0.40, 0.50, 0.10], # Degraded: can recover or fail
+        [0.015, 0.005, 0.98]  # Failure: tends to "stick" (the flood effect)
+    ])
 
+    current_correlation_id = None
+    
+    with open("markov_flow.log", 'w') as f:
         for _ in range(n):
-            date = datetime.datetime.now()
-            level = LVLS[random.randint(0, 6)]
-            service = SRVS[random.randint(0, 7)]
-            message = random.randint(0, len(MSGS[level]) - 1)
+            prob = random.uniform(0, 1)
+            probs = np.matmul(state_vector, transition)
+            
+            if prob < probs[0]:
+                state_idx = 0
+                current_correlation_id = None
+            elif prob < (probs[0] + probs[1]):
+                state_idx = 1
+            else:
+                state_idx = 2 # Failure
+                if not current_correlation_id:
+                    current_correlation_id = str(uuid.uuid4())[:8]
 
-            f.write("[{}] {} {} {}\n".format(date, level, service, MSGS[level][message]))
+            state_vector = np.zeros(3)
+            state_vector[state_idx] = 1
 
-            r = random.uniform(0.0001, 0.001)
+            level_idx = random.choice(STATE_MSGS[state_idx]["levels"])
+            level = LVLS[level_idx]
+            message = random.choice(STATE_MSGS[state_idx]["msgs"])
+            service = random.choice(SRVS)
+            
+            date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+            tid_str = f" [{current_correlation_id}]" if current_correlation_id else ""
+            
+            f.write(f"[{date}] {level.ljust(8)} {service.ljust(18)}{tid_str} {message}\n")
 
-            time.sleep(r)
+            if state_idx == 2 and random.random() < 0.3:
+                f.write(f"    at com.app.{service}.Core.execute(SourceFile.java:{random.randint(10, 500)})\n")
 
+            time.sleep(random.uniform(0.0001, 0.005))
 
 if __name__ == "__main__":
     lines = int(input("# of lines: "))
-
     solve(lines)
