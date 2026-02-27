@@ -28,7 +28,7 @@ def solve(n):
     # prevState: [Healthy, Degraded, Failure]
     state_vector = np.array([1, 0, 0])
     transition = np.array([
-        [0.9, 0.07, 0.03], # Healthy: usually stays healthy
+        [0.98, 0.015, 0.005], # Healthy: usually stays healthy
         [0.40, 0.50, 0.10], # Degraded: can recover or fail
         [0.015, 0.005, 0.98]  # Failure: tends to "stick" (the flood effect)
     ])

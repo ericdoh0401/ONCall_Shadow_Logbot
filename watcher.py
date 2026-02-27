@@ -1,9 +1,6 @@
 import json
 import time
 
-PADDING = 404040
-HR_PADDING = 24000000
-
 def watcher_start(log_queue, log_file_path = "filepath.log"):
     try:
         with open(log_file_path, 'r') as file:
