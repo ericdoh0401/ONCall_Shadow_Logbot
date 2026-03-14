@@ -15,6 +15,10 @@ def watcher_start(redis_conf, log_queue, log_file_path="markov_flow.log"):
             
             while True:
                 reader = file.readline()
+                
+                if reader[0] == " ":
+                    continue
+                
                 pattern = r'\[(.+?)\]\s+(\w+)\s+(\S+)\s+(.+)'
                 
                 if not reader:
