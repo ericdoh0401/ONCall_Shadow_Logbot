@@ -18,6 +18,10 @@ REDIS_CONF = {
 LOG_QUEUE = "log_pipeline_queue"
 
 if __name__ == "__main__":
+    startTime = time.time()
+
+    print(startTime)
+    
     n = int(input("Enter number of worker processes: "))
 
     with open(FILE_PATH, 'a') as f:
@@ -61,5 +65,8 @@ if __name__ == "__main__":
         
         for workerI in workers:
             workerI.join()
-            
+
+    endTime = time.time()
+
+    print(endTime)
     print("System Offline...")
