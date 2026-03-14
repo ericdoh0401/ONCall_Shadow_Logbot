@@ -1,7 +1,13 @@
+
+# watcher.py
+
+import redis
 import json
 import time
 
-def watcher_start(log_queue, log_file_path = "filepath.log"):
+def watcher_start(redis_conf, log_queue, log_file_path="filepath.log"):
+    r = redis.Redis(**redis_conf)
+    
     try:
         with open(log_file_path, 'r') as file:
             file.seek(0, 2)
@@ -13,8 +19,16 @@ def watcher_start(log_queue, log_file_path = "filepath.log"):
                     time.sleep(0.2)
                     continue
                 
-                log_entry = json.loads(reader.strip())
-                log_queue.put(log_entry)
+                try:
+                    log_entry = json.loads(reader.strip())
+                    r.lpush(log_queue, json.dumps(log_entry))
+                    
+                except json.JSONDecodeError:
+                    print(f"Skipping malformed line: {reader.strip()}")
+                    
+    except FileNotFoundError:
+        print(f"Error: The file {log_file_path} was not found.")
     
     except:
         print("Your file path does not exist")
+
