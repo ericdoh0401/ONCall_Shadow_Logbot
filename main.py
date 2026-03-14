@@ -47,15 +47,14 @@ if __name__ == "__main__":
         
         watcher.terminate()
         
-        r = redis.Redis(host=REDIS_CONF['host'], port=REDIS_CONF['port'], db=REDIS_CONF['db'])
+        r = redis.Redis(**REDIS_CONF)
         
         # Sending shutdown signals to all workers
         
         for _ in range(n):
-            r.lpush(REDIS_CONF[LOG_QUEUE], "SHUTDOWN_SIGNAL")
+            r.lpush(LOG_QUEUE, "SHUTDOWN_SIGNAL")
         
         for workerI in workers:
             workerI.join()
             
     print("System Offline...")
-
