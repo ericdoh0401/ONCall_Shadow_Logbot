@@ -28,7 +28,7 @@ def worker_start(redis_conf, log_queue):
             element = json.get(decoded_data)
                 
             lvl = element.get("level", "")
-            msg = element.get("event", "")
+            msg = element.get("message", "")
             time = element.get("timestamp", "")
 
             title = f"{lvl}: {msg}"
@@ -51,7 +51,7 @@ def worker_start(redis_conf, log_queue):
                 slack.send_slack_alert_manual(title, curSize, curTime)
                 # if the size of the 'title' folder is greater than some metric x, we should instantiate
                 # the Slack-message-sending function. (do not implement this one yet)
-                pass
+                # pass
         
         except Exception as e:
             print(f"Worker encountered an error: {e}")
