@@ -5,7 +5,7 @@ import redis
 import json
 import time
 
-def watcher_start(redis_conf, log_queue, log_file_path="filepath.log"):
+def watcher_start(redis_conf, log_queue, log_file_path="markov_flow.log"):
     r = redis.Redis(**redis_conf)
     
     try:
