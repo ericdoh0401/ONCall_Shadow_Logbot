@@ -30,7 +30,7 @@ def send_slack_alert_manual(error_title, count, timestamp):
             {
                 "type": "context",
                 "elements": [
-                    {"type": "mrkdwn", "text": f"Sent via 'requests' at {timestamp}"}
+                    {"type": "mrkdwn", "text": f"Sent via API 'requests' at {timestamp}"}
                 ]
             }
         ]
