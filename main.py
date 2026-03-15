@@ -21,7 +21,7 @@ if __name__ == "__main__":
     
     # place the redis_conf as a parameters so that the watcher knows where to push the data
     watcher = multiprocessing.Process(
-        watcher_start, 
+        target = watcher_start, 
         args = (REDIS_CONF, LOG_QUEUE,)
     )
     watcher.start()
@@ -31,7 +31,7 @@ if __name__ == "__main__":
         # each worker will get the same address, so that they all connect to the same Redis
         # instance to pull data
         workerI = multiprocessing.Process(
-            worker_start, 
+            target = worker_start, 
             args = (REDIS_CONF, LOG_QUEUE,)
         )
         workerI.start()
