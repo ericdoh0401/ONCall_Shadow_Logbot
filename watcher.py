@@ -26,7 +26,7 @@ def watcher_start(redis_conf, log_queue, log_file_path="markov_flow.log"):
                     continue
 
                 match = re.match(pattern, reader.strip())
-                
+                 
                 try:
                     log_entry = {
                         "timestamp" : match.group(1),
