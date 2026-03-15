@@ -9,11 +9,14 @@ import redis
 import time
 import uuid
 import json
+import logging
 
 WINDOW_SIZE = 100
 ERROR_MSG_FLAG = 50
 BOT_TOKEN = "X123456"
 CHANNEL = "C123456"
+
+logger = logging.getLogger(__name__)
 
 def worker_start(redis_conf, log_queue):
     r = redis.Redis(**redis_conf)
@@ -27,6 +30,8 @@ def worker_start(redis_conf, log_queue):
                 # terminate worker
                 print("Worker has received a shutdown signal. Exiting...")
                 break
+            
+            start_time = time.time()
             
             element = json.loads(decoded_data)
                 
@@ -42,20 +47,19 @@ def worker_start(redis_conf, log_queue):
             
             r.zadd(title, {uniqueTime: timestamp})
             
-            # if folder 'title' contains a timestamp that is 'outdated', we should remove it.
-            # (implement this one)
             curTime = time.time()
             cutoff = curTime - WINDOW_SIZE
             r.zremrangebyscore(title, 0, cutoff)
             
             curSize = r.zcard(title)
             
+            processing_time = time.time()
+            
+            logger.info(f"Processed | title='{title}' | queue_depth={curSize} | duration={processing_time:.4f}s")
+            
             if curSize > ERROR_MSG_FLAG: # the type of lvl is 'failure':
                 send_slack_alert_manual(title, curSize, curTime, BOT_TOKEN, CHANNEL)
-                # if the size of the 'title' folder is greater than some metric x, we should instantiate
-                # the Slack-message-sending function. (do not implement this one yet)
-                # pass
         
         except Exception as e:
-            print(f"Worker encountered an error: {e}")
+            logger.error(f"Failed to process message | error={e} | raw='{decoded_data}'")
            
