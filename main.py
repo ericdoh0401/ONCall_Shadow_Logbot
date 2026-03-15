@@ -6,6 +6,7 @@ from worker import worker_start
 from watcher import watcher_start
 import signal
 import redis
+import logging
 
 # --REDIS CONFIGURATION--
 REDIS_CONF = {
@@ -15,6 +16,10 @@ REDIS_CONF = {
 }
 LOG_QUEUE = "log_pipeline_queue"
 
+logging.basicConfig(
+    level = logging.INFO,
+    format = '%(asctime)s | %(processName)s | %(levelname)s | %(message)s'
+)
 
 if __name__ == "__main__":
     n = int(input("Enter number of worker processes: "))
