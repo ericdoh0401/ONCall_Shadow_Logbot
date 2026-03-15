@@ -1,0 +1,30 @@
+**Observability**
+- Add structured logging to workers — track processing time per message, errors, and queue depth
+- Expose a `/health` endpoint that reports worker count, queue depth, and uptime
+- Export Prometheus metrics — messages processed per second, alert rate, error rate
+
+---
+
+**Resilience**
+- Implement a dead letter queue — push failed/malformed messages to a separate Redis key instead of dropping them
+- Add worker restart logic in `main.py` — detect crashes and automatically spawn replacements
+- Add retry logic with exponential backoff on Slack API failures
+
+---
+
+**Config & Security**
+- Move `BOT_TOKEN`, `CHANNEL`, and Redis credentials to a `.env` file using `python-dotenv` — no hardcoded secrets
+- Replace raw config dicts with a `pydantic` settings model or dataclass
+
+---
+
+**Testing**
+- Write `pytest` unit tests for the worker's parsing and windowing logic
+- Set up a mock Redis fixture so tests run without a live instance
+- Mock the Slack call and assert it only fires when the error threshold is crossed
+
+---
+
+**Tooling**
+- Write a `Dockerfile` and `docker-compose.yml` to spin up Redis and the pipeline together
+- Write a `README.md` — include an architecture diagram, setup instructions, and a section on design decisions
