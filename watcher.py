@@ -16,13 +16,13 @@ def watcher_start(redis_conf, log_queue, log_file_path="markov_flow.log"):
             while True:
                 reader = file.readline()
                 
-                if reader[0] == " ":
-                    continue
-                
                 pattern = r'\[(.+?)\]\s+(\w+)\s+(\S+)\s+(.+)'
                 
                 if not reader:
                     time.sleep(0.2)
+                    continue
+                
+                if reader[0] == " ":
                     continue
 
                 match = re.match(pattern, reader.strip())
@@ -37,7 +37,7 @@ def watcher_start(redis_conf, log_queue, log_file_path="markov_flow.log"):
                     
                     r.lpush(log_queue, json.dumps(log_entry))
                     
-                except json.JSONDecodeError:
+                except (AttributeError, json.JSONDecodeError):
                     print(f"Skipping malformed line: {reader.strip()}")
                     
     except FileNotFoundError:
@@ -45,4 +45,3 @@ def watcher_start(redis_conf, log_queue, log_file_path="markov_flow.log"):
     
     except:
         print("Your file path does not exist")
-
