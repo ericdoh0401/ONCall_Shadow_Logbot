@@ -3,9 +3,8 @@
 import requests
 import json
 
-def send_slack_alert_manual(error_title, count, timestamp):
+def send_slack_alert_manual(error_title, count, timestamp, bot_token, channel):
     url = "https://slack.com/api/chat.postMessage"
-    bot_token = "xoxb-your-slack-token"
     
     # Fixed 'Content' typo
     headers = {
@@ -14,7 +13,7 @@ def send_slack_alert_manual(error_title, count, timestamp):
     }
     
     payload = {
-        "channel": "C12345678",
+        "channel": channel,
         "blocks": [
             {
                 "type": "header",
@@ -48,3 +47,6 @@ def send_slack_alert_manual(error_title, count, timestamp):
         else:
             print("Successful send.")
             return result['ts']
+            
+if __name__ == "__main__":
+    send_slack_alert_manual("ERROR", 50, "2024-01-01T00:00:00Z", "your-bot-token", "C123456")
