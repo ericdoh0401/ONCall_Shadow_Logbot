@@ -1,12 +1,12 @@
 **Observability**
-- Add structured logging to workers — track processing time per message, errors, and queue depth
-- Expose a `/health` endpoint that reports worker count, queue depth, and uptime
+- Add structured logging to workers — track processing time per message, errors, and queue depth (check)
+- Expose a `/health` endpoint that reports worker count, queue depth, and uptime 
 - Export Prometheus metrics — messages processed per second, alert rate, error rate
 
 ---
 
 **Resilience**
-- Implement a dead letter queue — push failed/malformed messages to a separate Redis key instead of dropping them
+- Implement a dead letter queue — push failed/malformed messages to a separate Redis key instead of dropping them (check)
 - Add worker restart logic in `main.py` — detect crashes and automatically spawn replacements
 - Add retry logic with exponential backoff on Slack API failures
 
