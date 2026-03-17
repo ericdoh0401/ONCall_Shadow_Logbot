@@ -1,6 +1,6 @@
 
 # main.py
-
+import time
 import multiprocessing
 from worker import worker_start
 from watcher import watcher_start
@@ -23,6 +23,8 @@ logging.basicConfig(
 
 if __name__ == "__main__":
     n = int(input("Enter number of worker processes: "))
+    
+    start_time = time.time()
     
     # place the redis_conf as a parameters so that the watcher knows where to push the data
     watcher = multiprocessing.Process(
@@ -62,4 +64,7 @@ if __name__ == "__main__":
         for workerI in workers:
             workerI.join()
             
+    total_time = time.time() - start_time
+    
+    print(f"Whole session took duration={total_time:.4f}s")
     print("System Offline...")
