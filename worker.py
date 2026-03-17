@@ -1,4 +1,3 @@
-
 # worker.py
 
 from collections import deque
@@ -15,7 +14,7 @@ WINDOW_SIZE = 100
 ERROR_MSG_FLAG = 50
 BOT_TOKEN = "X123456"
 CHANNEL = "C123456"
-
+MALF = "MALFORMED"
 logger = logging.getLogger(__name__)
 
 def worker_start(redis_conf, log_queue):
@@ -34,31 +33,45 @@ def worker_start(redis_conf, log_queue):
             start_time = time.time()
             
             element = json.loads(decoded_data)
+            
+            try:
+                lvl = element.get("level", "")
+                msg = element.get("message", "")
+                timestamp_str = element.get("timestamp", "")
+    
+                title = f"{lvl}: {msg}"
+                dt = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                timestamp = dt.timestamp()
                 
-            lvl = element.get("level", "")
-            msg = element.get("message", "")
-            timestamp_str = element.get("timestamp", "")
-
-            title = f"{lvl}: {msg}"
-            dt = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
-            timestamp = dt.timestamp()
+                uniqueTime = timestamp_str + " " + (str(uuid.uuid4()))[:6]
+                
+                r.zadd(title, {uniqueTime: timestamp})
+                
+                curTime = time.time()
+                cutoff = curTime - WINDOW_SIZE
+                r.zremrangebyscore(title, 0, cutoff)
+                
+                curSize = r.zcard(title)
+                
+                processing_time = time.time() - start_time
+                
+                logger.info(f"Processed | title='{title}' | queue_depth={curSize} | duration={processing_time:.4f}s")
+                
+                if curSize > ERROR_MSG_FLAG: # the type of lvl is 'failure':
+                    send_slack_alert_manual(title, curSize, curTime, BOT_TOKEN, CHANNEL)
             
-            uniqueTime = timestamp_str + " " + (str(uuid.uuid4()))[:6]
-            
-            r.zadd(title, {uniqueTime: timestamp})
-            
-            curTime = time.time()
-            cutoff = curTime - WINDOW_SIZE
-            r.zremrangebyscore(title, 0, cutoff)
-            
-            curSize = r.zcard(title)
-            
-            processing_time = time.time()
-            
-            logger.info(f"Processed | title='{title}' | queue_depth={curSize} | duration={processing_time:.4f}s")
-            
-            if curSize > ERROR_MSG_FLAG: # the type of lvl is 'failure':
-                send_slack_alert_manual(title, curSize, curTime, BOT_TOKEN, CHANNEL)
+            except:
+                # if the element does not follow the json file logic. 
+                desc = ""
+                
+                for key, value in element.items():
+                    if type(value) == str:
+                        desc += value
+                    
+                    if len(desc) > 25:
+                        break
+                    
+                r.lpush(MALF, desc)
         
         except Exception as e:
             logger.error(f"Failed to process message | error={e} | raw='{decoded_data}'")
