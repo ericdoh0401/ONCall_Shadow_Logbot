@@ -4,6 +4,7 @@ import time
 import multiprocessing
 from worker import worker_start
 from watcher import watcher_start
+from health import start_health_server
 import signal
 import redis
 import logging
@@ -43,6 +44,12 @@ if __name__ == "__main__":
         )
         workerI.start()
         workers.append(workerI)
+
+    health_server = multiprocessing.Process(
+        target = start_health_server,
+        args = (workers, start_time, REDIS_CONF, LOG_QUEUE,)
+        
+    health_server.start()
         
     print("System Online.")
     
@@ -53,6 +60,7 @@ if __name__ == "__main__":
         print("Stopping the system...")
         
         watcher.terminate()
+        health_server.terminate()
         
         r = redis.Redis(**REDIS_CONF)
         
