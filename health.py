@@ -2,6 +2,7 @@ from fastapi import FastAPI
 import uvicorn
 import redis
 import time
+import requests
 
 app = FastAPI()
 
@@ -41,4 +42,7 @@ def start_health_server(workers, start_time, redis_conf, log_queue):
   # starts the actual HTTP server on port 8000.
   uvicorn.run(app, host = "0.0.0.0", port = 8000)
 
-# curl http://localhost:8000/health
+if __name__ == "__main__":
+  # response = requests.get("http://localhost:8000/health")
+  # print(response.json())
+  # curl http://localhost:8000/health
